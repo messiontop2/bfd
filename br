@@ -1,227 +1,388 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 
+-- Settings
 local InfiniteJumpEnabled = false
 local MinSpeed = 50
 local MaxSpeed = 500
 local CurrentSpeed = 50
+local FPSBoostEnabled = false
+local OriginalQualityLevel = nil
 
+-- GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Name = "MovementGui"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local RunService = game:GetService("RunService")
-
-local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 360, 0, 460)
-Main.Position = UDim2.new(0.5, -180, 0.5, -220)
-Main.BackgroundColor3 = Color3.fromRGB(30,30,30)
-Main.BackgroundTransparency = 0.1
+-- Main Frame (with Shadow)
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 380, 0, 560)  -- Larger to fit new button
+Main.Position = UDim2.new(0.5, -190, 0.5, -280)
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Main.BackgroundTransparency = 0.05
 Main.Active = true
+Main.Parent = ScreenGui
+
+-- Shadow
+local Shadow = Instance.new("ImageLabel")
+Shadow.Size = UDim2.new(1, 20, 1, 20)
+Shadow.Position = UDim2.new(0, -10, 0, -10)
+Shadow.BackgroundTransparency = 1
+Shadow.Image = "rbxassetid://1316045217"
+Shadow.ImageColor3 = Color3.new(0, 0, 0)
+Shadow.ImageTransparency = 0.6
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+Shadow.Parent = Main
 
 local corner = Instance.new("UICorner", Main)
-corner.CornerRadius = UDim.new(0,16)
+corner.CornerRadius = UDim.new(0, 20)
 
 local stroke = Instance.new("UIStroke", Main)
-stroke.Thickness = 5
+stroke.Thickness = 4
+stroke.Transparency = 0.2
 
--- RAINBOW EFFECT
+-- Rainbow border effect
 local hue = 0
 RunService.RenderStepped:Connect(function(delta)
-    hue = hue + delta * 0.2  --   
+    hue = hue + delta * 0.15
     if hue > 1 then hue = 0 end
     stroke.Color = Color3.fromHSV(hue, 1, 1)
 end)
 
+-- Dragging variables
 local draggingFrame = false
 local dragStart
 local startPos
 local draggingSlider = false
 
 Main.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 and not draggingSlider then
-		draggingFrame = true
-		dragStart = input.Position
-		startPos = Main.Position
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and not draggingSlider then
+        draggingFrame = true
+        dragStart = input.Position
+        startPos = Main.Position
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingFrame = false
-		draggingSlider = false
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingFrame = false
+        draggingSlider = false
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if draggingFrame and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local delta = input.Position - dragStart
-		Main.Position = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y
-		)
-	end
+    if draggingFrame and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
 end)
 
+-- Title
 local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1,0,0,40)
+Title.Size = UDim2.new(1, 0, 0, 50)
 Title.BackgroundTransparency = 1
 Title.Text = "Zephyx Hub"
-Title.TextColor3 = Color3.new(1,1,1)
+Title.TextColor3 = Color3.new(1, 1, 1)
 Title.TextScaled = true
 Title.Font = Enum.Font.FredokaOne
+Title.TextStrokeTransparency = 0.5
 
+-- Infinite Jump Button
 local JumpButton = Instance.new("TextButton", Main)
-JumpButton.Size = UDim2.new(0.8,0,0,40)
-JumpButton.Position = UDim2.new(0.1,0,0,50)
-JumpButton.BackgroundColor3 = Color3.fromRGB(170,0,0)
+JumpButton.Size = UDim2.new(0.8, 0, 0, 45)
+JumpButton.Position = UDim2.new(0.1, 0, 0, 60)
+JumpButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 JumpButton.Text = "Infinite Jump: OFF"
-JumpButton.TextColor3 = Color3.new(1,1,1)
+JumpButton.TextColor3 = Color3.new(1, 1, 1)
 JumpButton.Font = Enum.Font.GothamBold
 JumpButton.TextScaled = true
-Instance.new("UICorner", JumpButton).CornerRadius = UDim.new(0,12)
+local jumpCorner = Instance.new("UICorner", JumpButton)
+jumpCorner.CornerRadius = UDim.new(0, 12)
 
-JumpButton.MouseButton1Click:Connect(function()
-	InfiniteJumpEnabled = not InfiniteJumpEnabled
-	if InfiniteJumpEnabled then
-		JumpButton.Text = "Infinite Jump: ON"
-		JumpButton.BackgroundColor3 = Color3.fromRGB(0,170,0)
-	else
-		JumpButton.Text = "Infinite Jump: OFF"
-		JumpButton.BackgroundColor3 = Color3.fromRGB(170,0,0)
-	end
+-- Hover effect
+JumpButton.MouseEnter:Connect(function()
+    TweenService:Create(JumpButton, TweenInfo.new(0.2), {BackgroundColor3 = JumpButton.BackgroundColor3:Lerp(Color3.new(1,1,1), 0.2)}):Play()
+end)
+JumpButton.MouseLeave:Connect(function()
+    TweenService:Create(JumpButton, TweenInfo.new(0.2), {BackgroundColor3 = InfiniteJumpEnabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)}):Play()
 end)
 
+JumpButton.MouseButton1Click:Connect(function()
+    InfiniteJumpEnabled = not InfiniteJumpEnabled
+    if InfiniteJumpEnabled then
+        JumpButton.Text = "Infinite Jump: ON"
+        JumpButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+    else
+        JumpButton.Text = "Infinite Jump: OFF"
+        JumpButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+    end
+end)
+
+-- Speed Label
 local SpeedLabel = Instance.new("TextLabel", Main)
-SpeedLabel.Size = UDim2.new(1,0,0,30)
-SpeedLabel.Position = UDim2.new(0,0,0,100)
+SpeedLabel.Size = UDim2.new(1, 0, 0, 30)
+SpeedLabel.Position = UDim2.new(0, 0, 0, 115)
 SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Text = "Speed: "..CurrentSpeed
-SpeedLabel.TextColor3 = Color3.new(1,1,1)
+SpeedLabel.Text = "Speed: " .. CurrentSpeed
+SpeedLabel.TextColor3 = Color3.new(1, 1, 1)
 SpeedLabel.Font = Enum.Font.GothamBold
 SpeedLabel.TextScaled = true
 
+-- Slider Bar
 local SliderBar = Instance.new("Frame", Main)
-SliderBar.Size = UDim2.new(0.8,0,0,8)
-SliderBar.Position = UDim2.new(0.1,0,0,140)
-SliderBar.BackgroundColor3 = Color3.fromRGB(60,60,60)
-Instance.new("UICorner", SliderBar).CornerRadius = UDim.new(1,0)
+SliderBar.Size = UDim2.new(0.8, 0, 0, 8)
+SliderBar.Position = UDim2.new(0.1, 0, 0, 155)
+SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+local barCorner = Instance.new("UICorner", SliderBar)
+barCorner.CornerRadius = UDim.new(1, 0)
 
 local SliderButton = Instance.new("Frame", SliderBar)
-SliderButton.Size = UDim2.new(0,20,0,20)
-SliderButton.Position = UDim2.new(0,0,-0.6,0)
-SliderButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-Instance.new("UICorner", SliderButton).CornerRadius = UDim.new(1,0)
+SliderButton.Size = UDim2.new(0, 22, 0, 22)
+SliderButton.Position = UDim2.new(0, -11, -0.7, 0)
+SliderButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+local thumbCorner = Instance.new("UICorner", SliderButton)
+thumbCorner.CornerRadius = UDim.new(1, 0)
 
 SliderButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingSlider = true
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = true
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local relativeX = math.clamp(
-			(input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X,
-			0,1
-		)
-		SliderButton.Position = UDim2.new(relativeX, -10, -0.6, 0)
-		CurrentSpeed = math.floor(MinSpeed + (MaxSpeed - MinSpeed) * relativeX)
-		SpeedLabel.Text = "Speed: "..CurrentSpeed
-		local character = player.Character
-		if character then
-			local humanoid = character:FindFirstChildOfClass("Humanoid")
-			if humanoid then
-				humanoid.WalkSpeed = CurrentSpeed
-			end
-		end
-	end
+    if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local relativeX = math.clamp(
+            (input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X,
+            0, 1
+        )
+        SliderButton.Position = UDim2.new(relativeX, -11, -0.7, 0)
+        CurrentSpeed = math.floor(MinSpeed + (MaxSpeed - MinSpeed) * relativeX)
+        SpeedLabel.Text = "Speed: " .. CurrentSpeed
+        local character = player.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = CurrentSpeed
+            end
+        end
+    end
 end)
 
+-- Infinite Jump handler
 UserInputService.JumpRequest:Connect(function()
-	if InfiniteJumpEnabled then
-		local character = player.Character
-		if character then
-			local humanoid = character:FindFirstChildOfClass("Humanoid")
-			if humanoid then
-				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-			end
-		end
-	end
+    if InfiniteJumpEnabled then
+        local character = player.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
 end)
 
 player.CharacterAdded:Connect(function(char)
-	local hum = char:WaitForChild("Humanoid")
-	hum.WalkSpeed = CurrentSpeed
+    local hum = char:WaitForChild("Humanoid")
+    hum.WalkSpeed = CurrentSpeed
 end)
+
+-- Section: Celestial Teleports
+local celestialHeader = Instance.new("TextLabel", Main)
+celestialHeader.Size = UDim2.new(1, 0, 0, 25)
+celestialHeader.Position = UDim2.new(0, 0, 0, 190)
+celestialHeader.BackgroundTransparency = 1
+celestialHeader.Text = "✨ Celestial ✨"
+celestialHeader.TextColor3 = Color3.fromRGB(200, 200, 255)
+celestialHeader.Font = Enum.Font.GothamBold
+celestialHeader.TextSize = 18
 
 local TPButtons = {
-	{-45,165,-2260,"tpcelestial1",0.05,180},
-	{26,165,-2352,"tpcelestial2",0.55,180},
-	{-32,165,-2503,"tpcelestial3",0.05,220},
-	{20,165,-2664,"tpcelestial4",0.55,220}
+    { -45, 165, -2260, "tpcelestial1", 0.05, 220 },
+    { 26, 165, -2352, "tpcelestial2", 0.55, 220 },
+    { -32, 165, -2503, "tpcelestial3", 0.05, 260 },
+    { 20, 165, -2664, "tpcelestial4", 0.55, 260 }
 }
 
-for _,v in pairs(TPButtons) do
-	local btn = Instance.new("TextButton", Main)
-	btn.Size = UDim2.new(0.38,0,0,30)
-	btn.Position = UDim2.new(v[5],0,0,v[6])
-	btn.BackgroundColor3 = Color3.fromRGB(120,0,200)
-	btn.Text = v[4]
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.Font = Enum.Font.GothamBold
-	btn.TextScaled = true
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
-	btn.MouseButton1Click:Connect(function()
-		local character = player.Character
-		if character and character:FindFirstChild("HumanoidRootPart") then
-			character.HumanoidRootPart.CFrame = CFrame.new(v[1],v[2],v[3])
-		end
-	end)
+for _, v in pairs(TPButtons) do
+    local btn = Instance.new("TextButton", Main)
+    btn.Size = UDim2.new(0.38, 0, 0, 35)
+    btn.Position = UDim2.new(v[5], 0, 0, v[6])
+    btn.BackgroundColor3 = Color3.fromRGB(120, 0, 200)
+    btn.Text = v[4]
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextScaled = true
+    local btnCorner = Instance.new("UICorner", btn)
+    btnCorner.CornerRadius = UDim.new(0, 12)
+
+    -- Hover effect
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(160, 80, 255)}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(120, 0, 200)}):Play()
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = CFrame.new(v[1], v[2], v[3])
+        end
+    end)
 end
+
+-- Section: Godly Teleports
+local godlyHeader = Instance.new("TextLabel", Main)
+godlyHeader.Size = UDim2.new(1, 0, 0, 25)
+godlyHeader.Position = UDim2.new(0, 0, 0, 310)
+godlyHeader.BackgroundTransparency = 1
+godlyHeader.Text = "👑 Godly 👑"
+godlyHeader.TextColor3 = Color3.fromRGB(255, 255, 150)
+godlyHeader.Font = Enum.Font.GothamBold
+godlyHeader.TextSize = 18
 
 local GodlyButtons = {
-	{-31,382,-3023,"tpgodly1",0.05,270},
-	{11,382,-3253,"tpgodly2",0.55,270},
-	{-15,440,-3503,"tpgodly3",0.3,310}
+    { -31, 382, -3023, "tpgodly1", 0.05, 340 },
+    { 11, 382, -3253, "tpgodly2", 0.55, 340 },
+    { -15, 440, -3503, "tpgodly3", 0.3, 385 }
 }
 
-for _,v in pairs(GodlyButtons) do
-	local btn = Instance.new("TextButton", Main)
-	btn.Size = UDim2.new(0.38,0,0,30)
-	btn.Position = UDim2.new(v[5],0,0,v[6])
-	btn.BackgroundColor3 = Color3.fromRGB(255,200,0)
-	btn.Text = v[4]
-	btn.TextColor3 = Color3.new(0,0,0)
-	btn.Font = Enum.Font.GothamBold
-	btn.TextScaled = true
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
-	btn.MouseButton1Click:Connect(function()
-		local character = player.Character
-		if character and character:FindFirstChild("HumanoidRootPart") then
-			character.HumanoidRootPart.CFrame = CFrame.new(v[1],v[2],v[3])
-		end
-	end)
+for _, v in pairs(GodlyButtons) do
+    local btn = Instance.new("TextButton", Main)
+    btn.Size = UDim2.new(0.38, 0, 0, 35)
+    btn.Position = UDim2.new(v[5], 0, 0, v[6])
+    btn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+    btn.Text = v[4]
+    btn.TextColor3 = Color3.new(0, 0, 0)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextScaled = true
+    local btnCorner = Instance.new("UICorner", btn)
+    btnCorner.CornerRadius = UDim.new(0, 12)
+
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 240, 100)}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 200, 0)}):Play()
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = CFrame.new(v[1], v[2], v[3])
+        end
+    end)
 end
 
+-- TP to Base
 local TPBaseButton = Instance.new("TextButton", Main)
-TPBaseButton.Size = UDim2.new(0.8,0,0,40)
-TPBaseButton.Position = UDim2.new(0.1,0,0,360)
-TPBaseButton.BackgroundColor3 = Color3.fromRGB(0,120,255)
-TPBaseButton.Text = "TP to Base"
-TPBaseButton.TextColor3 = Color3.new(1,1,1)
+TPBaseButton.Size = UDim2.new(0.8, 0, 0, 45)
+TPBaseButton.Position = UDim2.new(0.1, 0, 0, 440)
+TPBaseButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+TPBaseButton.Text = "🏠 TP to Base"
+TPBaseButton.TextColor3 = Color3.new(1, 1, 1)
 TPBaseButton.Font = Enum.Font.GothamBold
 TPBaseButton.TextScaled = true
-Instance.new("UICorner", TPBaseButton).CornerRadius = UDim.new(0,12)
+local baseCorner = Instance.new("UICorner", TPBaseButton)
+baseCorner.CornerRadius = UDim.new(0, 12)
+
+TPBaseButton.MouseEnter:Connect(function()
+    TweenService:Create(TPBaseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 180, 255)}):Play()
+end)
+TPBaseButton.MouseLeave:Connect(function()
+    TweenService:Create(TPBaseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 120, 255)}):Play()
+end)
 
 TPBaseButton.MouseButton1Click:Connect(function()
-	local character = player.Character
-	if character and character:FindFirstChild("HumanoidRootPart") then
-		character.HumanoidRootPart.CFrame = CFrame.new(98,4,36)
-	end
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        character.HumanoidRootPart.CFrame = CFrame.new(98, 4, 36)
+    end
 end)
+
+-- FPS Booster Button
+local FPSButton = Instance.new("TextButton", Main)
+FPSButton.Size = UDim2.new(0.8, 0, 0, 45)
+FPSButton.Position = UDim2.new(0.1, 0, 0, 500)
+FPSButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+FPSButton.Text = "⚡ FPS Booster (OFF)"
+FPSButton.TextColor3 = Color3.new(1, 1, 1)
+FPSButton.Font = Enum.Font.GothamBold
+FPSButton.TextScaled = true
+local fpsCorner = Instance.new("UICorner", FPSButton)
+fpsCorner.CornerRadius = UDim.new(0, 12)
+
+-- Hover
+FPSButton.MouseEnter:Connect(function()
+    TweenService:Create(FPSButton, TweenInfo.new(0.2), {BackgroundColor3 = FPSButton.BackgroundColor3:Lerp(Color3.new(1,1,1), 0.2)}):Play()
+end)
+FPSButton.MouseLeave:Connect(function()
+    TweenService:Create(FPSButton, TweenInfo.new(0.2), {BackgroundColor3 = FPSBoostEnabled and Color3.fromRGB(30, 100, 30) or Color3.fromRGB(50, 150, 50)}):Play()
+end)
+
+local function ApplyFPSBoost(enable)
+    local userGameSettings = UserSettings():GetService("UserGameSettings")
+    if enable then
+        -- Store original quality if not already stored
+        if OriginalQualityLevel == nil then
+            OriginalQualityLevel = userGameSettings.QualityLevel
+        end
+        -- Set all to low for maximum performance
+        userGameSettings.QualityLevel = Enum.QualityLevel.Level01
+        userGameSettings.ShadowQuality = Enum.ShadowQuality.Disabled
+        userGameSettings.TextureQuality = Enum.TextureQuality.Low
+        userGameSettings.RenderQuality = Enum.RenderQuality.Low
+        userGameSettings.ParticleQuality = Enum.ParticleQuality.Low
+        userGameSettings.VREnabled = false
+        -- Optional: disable anti-aliasing if available
+        pcall(function() userGameSettings.AntiAliasing = Enum.AntiAliasing.Disabled end)
+    else
+        -- Restore original quality if we have it
+        if OriginalQualityLevel then
+            userGameSettings.QualityLevel = OriginalQualityLevel
+        else
+            userGameSettings.QualityLevel = Enum.QualityLevel.Level10 -- default medium
+        end
+        userGameSettings.ShadowQuality = Enum.ShadowQuality.Medium
+        userGameSettings.TextureQuality = Enum.TextureQuality.High
+        userGameSettings.RenderQuality = Enum.RenderQuality.High
+        userGameSettings.ParticleQuality = Enum.ParticleQuality.High
+    end
+    userGameSettings:Save()
+end
+
+FPSButton.MouseButton1Click:Connect(function()
+    FPSBoostEnabled = not FPSBoostEnabled
+    ApplyFPSBoost(FPSBoostEnabled)
+    if FPSBoostEnabled then
+        FPSButton.Text = "⚡ FPS Booster (ON)"
+        FPSButton.BackgroundColor3 = Color3.fromRGB(30, 100, 30)
+    else
+        FPSButton.Text = "⚡ FPS Booster (OFF)"
+        FPSButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+    end
+end)
+
+-- Optional: Load current speed from character on spawn
+if player.Character then
+    local hum = player.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        CurrentSpeed = hum.WalkSpeed
+        SpeedLabel.Text = "Speed: " .. CurrentSpeed
+        -- Set slider position accordingly
+        local relativeX = (CurrentSpeed - MinSpeed) / (MaxSpeed - MinSpeed)
+        SliderButton.Position = UDim2.new(relativeX, -11, -0.7, 0)
+    end
+end
