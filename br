@@ -312,28 +312,25 @@ local function optimizeObject(v)
     end
 end
 
-local optimizerConnection = nil
+local optimizerConnection
 
 local function applyAdvancedOptimizer()
-    for _, v in pairs(Workspace:GetDescendants()) do
+    for _, v in ipairs(Workspace:GetDescendants()) do
         optimizeObject(v)
     end
 
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 100000
-    Lighting.Brightness = 1
+    pcall(function()
+        Lighting.GlobalShadows = false
+        Lighting.Brightness = 1
+        Lighting.FogEnd = 100000
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    end)
 
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-
-    if not optimizerConnection then
-        optimizerConnection = Workspace.DescendantAdded:Connect(function(v)
-            if FPSBoostEnabled then
-                task.spawn(function()
-                    optimizeObject(v)
-                end)
-            end
-        end)
-    end
+    optimizerConnection = Workspace.DescendantAdded:Connect(function(v)
+        if FPSBoostEnabled then
+            optimizeObject(v)
+        end
+    end)
 end
 
 local function disableOptimizer()
@@ -342,11 +339,14 @@ local function disableOptimizer()
         optimizerConnection = nil
     end
 
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
-    Lighting.GlobalShadows = true
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+        Lighting.GlobalShadows = true
+    end)
 end
 
-local FPSButton = Instance.new("TextButton", Main)
+local FPSButton = Instance.new("TextButton")
+FPSButton.Parent = Main
 FPSButton.Size = UDim2.new(0.8, 0, 0, 45)
 FPSButton.Position = UDim2.new(0.1, 0, 0, 500)
 FPSButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
@@ -355,8 +355,7 @@ FPSButton.TextColor3 = Color3.new(1, 1, 1)
 FPSButton.Font = Enum.Font.GothamBold
 FPSButton.TextScaled = true
 
-local fpsCorner = Instance.new("UICorner", FPSButton)
-fpsCorner.CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", FPSButton).CornerRadius = UDim.new(0, 12)
 
 FPSButton.MouseButton1Click:Connect(function()
     FPSBoostEnabled = not FPSBoostEnabled
