@@ -12,7 +12,6 @@ local MinSpeed = 50
 local MaxSpeed = 500
 local CurrentSpeed = 50
 local FPSBoostEnabled = false
-local OriginalQualityLevel = nil
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
@@ -154,10 +153,8 @@ end)
 
 UserInputService.InputChanged:Connect(function(input)
     if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local relativeX = math.clamp(
-            (input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X,
-            0, 1
-        )
+        local relativeX = (input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X
+        relativeX = math.max(0, math.min(1, relativeX))
         SliderButton.Position = UDim2.new(relativeX, -11, -0.7, 0)
         CurrentSpeed = math.floor(MinSpeed + (MaxSpeed - MinSpeed) * relativeX)
         SpeedLabel.Text = "Speed: " .. CurrentSpeed
@@ -183,9 +180,17 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
+local function updateSliderFromSpeed(speed)
+    local relativeX = (speed - MinSpeed) / (MaxSpeed - MinSpeed)
+    relativeX = math.max(0, math.min(1, relativeX))
+    SliderButton.Position = UDim2.new(relativeX, -11, -0.7, 0)
+    SpeedLabel.Text = "Speed: " .. speed
+end
+
 player.CharacterAdded:Connect(function(char)
     local hum = char:WaitForChild("Humanoid")
     hum.WalkSpeed = CurrentSpeed
+    updateSliderFromSpeed(CurrentSpeed)
 end)
 
 local celestialHeader = Instance.new("TextLabel", Main)
@@ -315,17 +320,19 @@ end
 local optimizerConnection
 
 local function applyAdvancedOptimizer()
+    if optimizerConnection then
+        optimizerConnection:Disconnect()
+        optimizerConnection = nil
+    end
     for _, v in ipairs(Workspace:GetDescendants()) do
         optimizeObject(v)
     end
-
     pcall(function()
         Lighting.GlobalShadows = false
         Lighting.Brightness = 1
         Lighting.FogEnd = 100000
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
     end)
-
     optimizerConnection = Workspace.DescendantAdded:Connect(function(v)
         if FPSBoostEnabled then
             optimizeObject(v)
@@ -338,7 +345,6 @@ local function disableOptimizer()
         optimizerConnection:Disconnect()
         optimizerConnection = nil
     end
-
     pcall(function()
         settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
         Lighting.GlobalShadows = true
@@ -359,7 +365,6 @@ Instance.new("UICorner", FPSButton).CornerRadius = UDim.new(0, 12)
 
 FPSButton.MouseButton1Click:Connect(function()
     FPSBoostEnabled = not FPSBoostEnabled
-
     if FPSBoostEnabled then
         applyAdvancedOptimizer()
         FPSButton.Text = "⚡ FPS Booster (ON)"
@@ -375,8 +380,6 @@ if player.Character then
     local hum = player.Character:FindFirstChildOfClass("Humanoid")
     if hum then
         CurrentSpeed = hum.WalkSpeed
-        SpeedLabel.Text = "Speed: " .. CurrentSpeed
-        local relativeX = (CurrentSpeed - MinSpeed) / (MaxSpeed - MinSpeed)
-        SliderButton.Position = UDim2.new(relativeX, -11, -0.7, 0)
+        updateSliderFromSpeed(CurrentSpeed)
     end
 end
