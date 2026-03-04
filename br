@@ -197,16 +197,16 @@ local celestialHeader = Instance.new("TextLabel", Main)
 celestialHeader.Size = UDim2.new(1, 0, 0, 25)
 celestialHeader.Position = UDim2.new(0, 0, 0, 190)
 celestialHeader.BackgroundTransparency = 1
-celestialHeader.Text = "✨ Celestial ✨"
+celestialHeader.Text = " Celestial "
 celestialHeader.TextColor3 = Color3.fromRGB(200, 200, 255)
 celestialHeader.Font = Enum.Font.GothamBold
 celestialHeader.TextSize = 18
 
 local TPButtons = {
-    { -45, 165, -2260, "tpcelestial1", 0.05, 220 },
-    { 26, 165, -2352, "tpcelestial2", 0.55, 220 },
-    { -32, 165, -2503, "tpcelestial3", 0.05, 260 },
-    { 20, 165, -2664, "tpcelestial4", 0.55, 260 }
+    { -45, 165, -2260, "TP1", 0.05, 220 },
+    { 26, 165, -2352, "TP2", 0.55, 220 },
+    { -32, 165, -2503, "TP3", 0.05, 260 },
+    { 20, 165, -2664, "TP4", 0.55, 260 }
 }
 
 for _, v in pairs(TPButtons) do
@@ -240,15 +240,15 @@ local godlyHeader = Instance.new("TextLabel", Main)
 godlyHeader.Size = UDim2.new(1, 0, 0, 25)
 godlyHeader.Position = UDim2.new(0, 0, 0, 310)
 godlyHeader.BackgroundTransparency = 1
-godlyHeader.Text = "👑 Godly 👑"
+godlyHeader.Text = " Godly "
 godlyHeader.TextColor3 = Color3.fromRGB(255, 255, 150)
 godlyHeader.Font = Enum.Font.GothamBold
 godlyHeader.TextSize = 18
 
 local GodlyButtons = {
-    { -31, 382, -3023, "tpgodly1", 0.05, 340 },
-    { 11, 382, -3253, "tpgodly2", 0.55, 340 },
-    { -15, 440, -3503, "tpgodly3", 0.3, 385 }
+    { -31, 382, -3023, "TP1", 0.05, 340 },
+    { 11, 382, -3253, "TP2", 0.55, 340 },
+    { -15, 440, -3503, "TP3", 0.3, 385 }
 }
 
 for _, v in pairs(GodlyButtons) do
@@ -282,7 +282,7 @@ local TPBaseButton = Instance.new("TextButton", Main)
 TPBaseButton.Size = UDim2.new(0.8, 0, 0, 45)
 TPBaseButton.Position = UDim2.new(0.1, 0, 0, 440)
 TPBaseButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-TPBaseButton.Text = "🏠 TP to Base"
+TPBaseButton.Text = "TP to Base"
 TPBaseButton.TextColor3 = Color3.new(1, 1, 1)
 TPBaseButton.Font = Enum.Font.GothamBold
 TPBaseButton.TextScaled = true
@@ -356,7 +356,7 @@ FPSButton.Parent = Main
 FPSButton.Size = UDim2.new(0.8, 0, 0, 45)
 FPSButton.Position = UDim2.new(0.1, 0, 0, 500)
 FPSButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-FPSButton.Text = "⚡ FPS Booster (OFF)"
+FPSButton.Text = " FPS Booster (OFF)"
 FPSButton.TextColor3 = Color3.new(1, 1, 1)
 FPSButton.Font = Enum.Font.GothamBold
 FPSButton.TextScaled = true
@@ -367,11 +367,11 @@ FPSButton.MouseButton1Click:Connect(function()
     FPSBoostEnabled = not FPSBoostEnabled
     if FPSBoostEnabled then
         applyAdvancedOptimizer()
-        FPSButton.Text = "⚡ FPS Booster (ON)"
+        FPSButton.Text = " FPS Booster (ON)"
         FPSButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
     else
         disableOptimizer()
-        FPSButton.Text = "⚡ FPS Booster (OFF)"
+        FPSButton.Text = " FPS Booster (OFF)"
         FPSButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
     end
 end)
