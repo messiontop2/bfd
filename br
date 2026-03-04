@@ -370,7 +370,7 @@ FPSButton.MouseButton1Click:Connect(function()
         FPSButton.Text = "⚡ FPS Booster (OFF)"
         FPSButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
     end
-end
+end)
 
 if player.Character then
     local hum = player.Character:FindFirstChildOfClass("Humanoid")
