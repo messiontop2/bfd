@@ -2,10 +2,11 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 
--- Settings
 local InfiniteJumpEnabled = false
 local MinSpeed = 50
 local MaxSpeed = 500
@@ -13,23 +14,20 @@ local CurrentSpeed = 50
 local FPSBoostEnabled = false
 local OriginalQualityLevel = nil
 
--- GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Name = "MovementGui"
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Main Frame (with Shadow)
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 380, 0, 560)  -- Larger to fit new button
-Main.Position = UDim2.new(0.5, -190, 0.5, -280)
+Main.Size = UDim2.new(0, 360, 0, 560)
+Main.Position = UDim2.new(0.5, -180, 0.5, -280)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Main.BackgroundTransparency = 0.05
 Main.Active = true
 Main.Parent = ScreenGui
 
--- Shadow
 local Shadow = Instance.new("ImageLabel")
 Shadow.Size = UDim2.new(1, 20, 1, 20)
 Shadow.Position = UDim2.new(0, -10, 0, -10)
@@ -48,7 +46,6 @@ local stroke = Instance.new("UIStroke", Main)
 stroke.Thickness = 4
 stroke.Transparency = 0.2
 
--- Rainbow border effect
 local hue = 0
 RunService.RenderStepped:Connect(function(delta)
     hue = hue + delta * 0.15
@@ -56,7 +53,6 @@ RunService.RenderStepped:Connect(function(delta)
     stroke.Color = Color3.fromHSV(hue, 1, 1)
 end)
 
--- Dragging variables
 local draggingFrame = false
 local dragStart
 local startPos
@@ -89,7 +85,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Title
 local Title = Instance.new("TextLabel", Main)
 Title.Size = UDim2.new(1, 0, 0, 50)
 Title.BackgroundTransparency = 1
@@ -99,7 +94,6 @@ Title.TextScaled = true
 Title.Font = Enum.Font.FredokaOne
 Title.TextStrokeTransparency = 0.5
 
--- Infinite Jump Button
 local JumpButton = Instance.new("TextButton", Main)
 JumpButton.Size = UDim2.new(0.8, 0, 0, 45)
 JumpButton.Position = UDim2.new(0.1, 0, 0, 60)
@@ -111,7 +105,6 @@ JumpButton.TextScaled = true
 local jumpCorner = Instance.new("UICorner", JumpButton)
 jumpCorner.CornerRadius = UDim.new(0, 12)
 
--- Hover effect
 JumpButton.MouseEnter:Connect(function()
     TweenService:Create(JumpButton, TweenInfo.new(0.2), {BackgroundColor3 = JumpButton.BackgroundColor3:Lerp(Color3.new(1,1,1), 0.2)}):Play()
 end)
@@ -130,7 +123,6 @@ JumpButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Speed Label
 local SpeedLabel = Instance.new("TextLabel", Main)
 SpeedLabel.Size = UDim2.new(1, 0, 0, 30)
 SpeedLabel.Position = UDim2.new(0, 0, 0, 115)
@@ -140,7 +132,6 @@ SpeedLabel.TextColor3 = Color3.new(1, 1, 1)
 SpeedLabel.Font = Enum.Font.GothamBold
 SpeedLabel.TextScaled = true
 
--- Slider Bar
 local SliderBar = Instance.new("Frame", Main)
 SliderBar.Size = UDim2.new(0.8, 0, 0, 8)
 SliderBar.Position = UDim2.new(0.1, 0, 0, 155)
@@ -180,7 +171,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Infinite Jump handler
 UserInputService.JumpRequest:Connect(function()
     if InfiniteJumpEnabled then
         local character = player.Character
@@ -198,7 +188,6 @@ player.CharacterAdded:Connect(function(char)
     hum.WalkSpeed = CurrentSpeed
 end)
 
--- Section: Celestial Teleports
 local celestialHeader = Instance.new("TextLabel", Main)
 celestialHeader.Size = UDim2.new(1, 0, 0, 25)
 celestialHeader.Position = UDim2.new(0, 0, 0, 190)
@@ -227,7 +216,6 @@ for _, v in pairs(TPButtons) do
     local btnCorner = Instance.new("UICorner", btn)
     btnCorner.CornerRadius = UDim.new(0, 12)
 
-    -- Hover effect
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(160, 80, 255)}):Play()
     end)
@@ -243,7 +231,6 @@ for _, v in pairs(TPButtons) do
     end)
 end
 
--- Section: Godly Teleports
 local godlyHeader = Instance.new("TextLabel", Main)
 godlyHeader.Size = UDim2.new(1, 0, 0, 25)
 godlyHeader.Position = UDim2.new(0, 0, 0, 310)
@@ -286,7 +273,6 @@ for _, v in pairs(GodlyButtons) do
     end)
 end
 
--- TP to Base
 local TPBaseButton = Instance.new("TextButton", Main)
 TPBaseButton.Size = UDim2.new(0.8, 0, 0, 45)
 TPBaseButton.Position = UDim2.new(0.1, 0, 0, 440)
@@ -312,7 +298,99 @@ TPBaseButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- FPS Booster Button
+local function optimizeObject(v)
+    pcall(function()
+        if v:IsA("Model") then
+            v.LevelOfDetail = Enum.ModelLevelOfDetail.Disabled
+            v.ModelStreamingMode = Enum.ModelStreamingMode.Nonatomic
+        elseif v:IsA("BasePart") and not v:IsA("MeshPart") then
+            v.CastShadow = false
+            v.Material = Enum.Material.Plastic
+            v.Reflectance = 0
+            v.MaterialVariant = ""
+        elseif v:IsA("Decal") or v:IsA("Texture") then
+            v.Transparency = 1
+        elseif v:IsA("MeshPart") then
+            v.CastShadow = false
+            v.DoubleSided = false
+            v.RenderFidelity = Enum.RenderFidelity.Performance
+            pcall(function() v.TextureID = 10385902758728957 end)
+        elseif v:IsA("SpecialMesh") then
+            v.TextureId = 0
+        elseif v:IsA("ShirtGraphic") then
+            v.Graphic = 0
+        elseif v:IsA("Shirt") or v:IsA("Pants") then
+            v[v.ClassName.."Template"] = 0
+        elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
+            v.Enabled = false
+        elseif v:IsA("Explosion") then
+            v.BlastPressure = 1
+            v.BlastRadius = 1
+        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+            v.Enabled = false
+        elseif v:IsA("Beam") then
+            v.Enabled = false
+        elseif v:IsA("SurfaceAppearance") then
+            v:Destroy()
+        elseif v:IsA("Debris") then
+            v:Destroy()
+        elseif v:IsA("Attachment") then
+            v.Visible = false
+        elseif v:IsA("MaterialVariant") then
+            v:Destroy()
+        end
+    end)
+end
+
+local optimizerDescendantConnection = nil
+local optimizerLightingConnection = nil
+
+local function applyAdvancedOptimizer()
+    pcall(function() setfpscap(999999999) end)
+    for _, v in pairs(Workspace:GetDescendants()) do optimizeObject(v) end
+    for _, v in pairs(Lighting:GetDescendants()) do
+        pcall(function()
+            if v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("Clouds") or v:IsA("PostEffect") or v:IsA("ColorCorrectionEffect") then
+                v:Destroy()
+            end
+        end)
+    end
+    pcall(function()
+        pcall(function() sethiddenproperty(Lighting, "Technology", 2) end)
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        Lighting.Brightness = 0
+    end)
+    local terrain = Workspace:FindFirstChildOfClass("Terrain")
+    if terrain then
+        pcall(function()
+            pcall(function() sethiddenproperty(terrain, "Decoration", false) end)
+            terrain.WaterReflectance = 0
+            terrain.WaterTransparency = 0.7
+            terrain.WaterWaveSize = 0
+            terrain.WaterWaveSpeed = 0
+        end)
+    end
+    if not optimizerLightingConnection then
+        optimizerLightingConnection = Lighting.ChildAdded:Connect(function(v)
+            if FPSBoostEnabled then task.spawn(function() pcall(function() v:Destroy() end) end) end
+        end)
+    end
+    if not optimizerDescendantConnection then
+        optimizerDescendantConnection = Workspace.DescendantAdded:Connect(function(v)
+            if FPSBoostEnabled then task.spawn(function() optimizeObject(v) end) end
+        end)
+    end
+    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+end
+
+local function disableOptimizer()
+    if optimizerDescendantConnection then optimizerDescendantConnection:Disconnect() optimizerDescendantConnection = nil end
+    if optimizerLightingConnection then optimizerLightingConnection:Disconnect() optimizerLightingConnection = nil end
+    pcall(function() setfpscap(60) end)
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+end
+
 local FPSButton = Instance.new("TextButton", Main)
 FPSButton.Size = UDim2.new(0.8, 0, 0, 45)
 FPSButton.Position = UDim2.new(0.1, 0, 0, 500)
@@ -324,7 +402,6 @@ FPSButton.TextScaled = true
 local fpsCorner = Instance.new("UICorner", FPSButton)
 fpsCorner.CornerRadius = UDim.new(0, 12)
 
--- Hover
 FPSButton.MouseEnter:Connect(function()
     TweenService:Create(FPSButton, TweenInfo.new(0.2), {BackgroundColor3 = FPSButton.BackgroundColor3:Lerp(Color3.new(1,1,1), 0.2)}):Play()
 end)
@@ -332,56 +409,24 @@ FPSButton.MouseLeave:Connect(function()
     TweenService:Create(FPSButton, TweenInfo.new(0.2), {BackgroundColor3 = FPSBoostEnabled and Color3.fromRGB(30, 100, 30) or Color3.fromRGB(50, 150, 50)}):Play()
 end)
 
-local function ApplyFPSBoost(enable)
-    local userGameSettings = UserSettings():GetService("UserGameSettings")
-    if enable then
-        -- Store original quality if not already stored
-        if OriginalQualityLevel == nil then
-            OriginalQualityLevel = userGameSettings.QualityLevel
-        end
-        -- Set all to low for maximum performance
-        userGameSettings.QualityLevel = Enum.QualityLevel.Level01
-        userGameSettings.ShadowQuality = Enum.ShadowQuality.Disabled
-        userGameSettings.TextureQuality = Enum.TextureQuality.Low
-        userGameSettings.RenderQuality = Enum.RenderQuality.Low
-        userGameSettings.ParticleQuality = Enum.ParticleQuality.Low
-        userGameSettings.VREnabled = false
-        -- Optional: disable anti-aliasing if available
-        pcall(function() userGameSettings.AntiAliasing = Enum.AntiAliasing.Disabled end)
-    else
-        -- Restore original quality if we have it
-        if OriginalQualityLevel then
-            userGameSettings.QualityLevel = OriginalQualityLevel
-        else
-            userGameSettings.QualityLevel = Enum.QualityLevel.Level10 -- default medium
-        end
-        userGameSettings.ShadowQuality = Enum.ShadowQuality.Medium
-        userGameSettings.TextureQuality = Enum.TextureQuality.High
-        userGameSettings.RenderQuality = Enum.RenderQuality.High
-        userGameSettings.ParticleQuality = Enum.ParticleQuality.High
-    end
-    userGameSettings:Save()
-end
-
 FPSButton.MouseButton1Click:Connect(function()
     FPSBoostEnabled = not FPSBoostEnabled
-    ApplyFPSBoost(FPSBoostEnabled)
     if FPSBoostEnabled then
+        applyAdvancedOptimizer()
         FPSButton.Text = "⚡ FPS Booster (ON)"
         FPSButton.BackgroundColor3 = Color3.fromRGB(30, 100, 30)
     else
+        disableOptimizer()
         FPSButton.Text = "⚡ FPS Booster (OFF)"
         FPSButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
     end
 end)
 
--- Optional: Load current speed from character on spawn
 if player.Character then
     local hum = player.Character:FindFirstChildOfClass("Humanoid")
     if hum then
         CurrentSpeed = hum.WalkSpeed
         SpeedLabel.Text = "Speed: " .. CurrentSpeed
-        -- Set slider position accordingly
         local relativeX = (CurrentSpeed - MinSpeed) / (MaxSpeed - MinSpeed)
         SliderButton.Position = UDim2.new(relativeX, -11, -0.7, 0)
     end
